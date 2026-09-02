@@ -1,0 +1,40 @@
+name: HKJC 賠率自動爬蟲
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v4
+
+      - name: 安裝 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安裝必要套件
+        run: |
+          pip install playwright pandas
+          playwright install --with-deps chromium
+
+      - name: 下載歷史資料庫
+        uses: actions/download-artifact@v4
+        with:
+          name: odds-db
+          path: data
+        continue-on-error: true
+
+      - name: 執行爬蟲
+        run: python hkjc_crawler.py
+
+      - name: 保存資料庫給下次使用
+        uses: actions/upload-artifact@v4
+        with:
+          name: odds-db
+          path: data/hkjc_odds.dbracing_data.db
